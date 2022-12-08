@@ -4,15 +4,17 @@ import './app/layout/styles.css';
 import App from './app/layout/App';
 import reportWebVitals from './reportWebVitals';
 import { SotreContext, store } from './app/stores/store';
+import { BrowserRouter, RouterProvider } from 'react-router-dom';
+import { router } from './app/router/Routes';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <SotreContext.Provider value={store}>
-    <App />
+    <RouterProvider router={router} />
   </SotreContext.Provider>
-  
+
   // <React.StrictMode>
   //   <App />
   // </React.StrictMode>
