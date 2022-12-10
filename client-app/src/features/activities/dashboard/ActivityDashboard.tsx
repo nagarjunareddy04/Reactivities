@@ -6,6 +6,7 @@ import { Activity } from "../../../app/models/activity";
 import { useStore } from "../../../app/stores/store";
 import ActivityDetails from "../details/ActivityDetails";
 import ActivityForm from "../form/ActivityForm";
+import ActivityFilters from "./ActivityFilters";
 import ActivityList from "./ActivityList";
 
 export default observer(function ActivityDashboard() {
@@ -27,7 +28,7 @@ export default observer(function ActivityDashboard() {
                     <ActivityList />
                 </Grid.Column>
                 <Grid.Column width='6'>
-                    <h2>Activity Filters</h2>
+                    <ActivityFilters />
                     {/* {selectedActivity && !editMode &&
                         <ActivityDetails />}
                     {editMode &&
