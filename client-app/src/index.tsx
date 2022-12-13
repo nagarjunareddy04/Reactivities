@@ -7,6 +7,7 @@ import reportWebVitals from './reportWebVitals';
 import { SotreContext, store } from './app/stores/store';
 import { BrowserRouter, RouterProvider } from 'react-router-dom';
 import { router } from './app/router/Routes';
+import 'react-toastify/dist/ReactToastify.min.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
