@@ -8,11 +8,23 @@ using FluentValidation.AspNetCore;
 using API.Middleware;
 using Domain;
 using Microsoft.AspNetCore.Identity;
+using API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["TokenKey"]));
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(opt =>
+{
+    var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    opt.Filters.Add(new AuthorizeFilter(policy)); 
+});
+
 builder.Services.AddDbContext<DataContext>(options => {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
@@ -28,10 +40,20 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Create>();
 builder.Services.AddIdentityCore<AppUser>(opt => {
     opt.Password.RequireNonAlphanumeric = false;
+    opt.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<DataContext>();
-builder.Services.AddAuthentication();
-
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt => {
+        opt.TokenValidationParameters=new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey =    key,
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+builder.Services.AddScoped<TokenService>();
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
@@ -50,6 +72,7 @@ app.UseCors(opt=>{
     opt.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3001");
 });
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
