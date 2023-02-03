@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Application.Interfaces;
 using Infrastructure.Security;
 using Infrastructure.Photos;
+using API.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["TokenKey"]));
@@ -57,6 +58,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false
         };
+        opt.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if(!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chat")))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization(opt=>{
     opt.AddPolicy("IsActivityHost", policy => {
@@ -67,6 +82,7 @@ builder.Services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>()
 builder.Services.AddScoped<TokenService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<IPhotoAccessor, PhotoAccessor>();
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
@@ -82,14 +98,14 @@ if (app.Environment.IsDevelopment())
 //app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(opt=>{
-    opt.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3001");
+    opt.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("http://localhost:3001");
 });
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapHub<ChatHub>("/chat");
 app.Run();
 
 async void Configure(WebApplication host)

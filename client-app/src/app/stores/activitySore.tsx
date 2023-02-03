@@ -197,6 +197,10 @@ export default class ActivityStore {
             runInAction(()=> this.loading = false);
         }
     }
+
+    clearSelectedActivity = async () => {
+        this.selectedActivity = undefined;
+    }
 }
 
 // title = "Hello from MobX!";
